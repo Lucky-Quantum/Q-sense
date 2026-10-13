@@ -1,0 +1,94 @@
+/* Global AI Tutor launcher */
+.floating-tutor-button {
+  width: 58px;
+  height: 58px;
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(139, 100, 250, 0.55);
+  border-radius: 50%;
+  color: #d7ccff;
+  background: radial-gradient(circle at 35% 30%, #8b62f7, #31186c 64%, #0b0d20);
+  box-shadow: 0 0 28px rgba(112, 72, 236, 0.34), 0 16px 45px rgba(0,0,0,.35);
+  cursor: pointer;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.floating-tutor-button:hover { transform: translateY(-3px) scale(1.03); }
+.floating-tutor-button.is-open { transform: rotate(8deg); }
+.floating-tutor-button svg { position: relative; z-index: 2; width: 28px; height: 28px; }
+.floating-tutor-orbit { position: absolute; inset: 7px; border: 1px solid rgba(82, 218, 234, .28); border-radius: 50%; transform: rotate(28deg) scaleX(1.4); }
+.floating-tutor-orbit::after { content:""; width:6px; height:6px; position:absolute; top:4px; right:3px; border-radius:50%; background:#4de1ee; box-shadow:0 0 12px #4de1ee; }
+
+.floating-tutor-panel {
+  width: 350px;
+  position: fixed;
+  right: 24px;
+  bottom: 94px;
+  z-index: 99;
+  overflow: hidden;
+  border: 1px solid rgba(126,106,192,.25);
+  border-radius: 18px;
+  background: rgba(9, 12, 30, .97);
+  box-shadow: 0 28px 90px rgba(0,0,0,.45);
+  backdrop-filter: blur(18px);
+}
+.floating-tutor-header { min-height: 64px; padding: 0 15px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(105,108,138,.12); }
+.floating-tutor-title { display:flex; gap:9px; align-items:center; }
+.floating-tutor-icon { width:34px; height:34px; display:grid; place-items:center; border-radius:10px; color:#b798ff; background:rgba(104,67,202,.13); }
+.floating-tutor-icon svg { width:18px; height:18px; }
+.floating-tutor-title strong,.floating-tutor-title span { display:block; }
+.floating-tutor-title strong { font-size:11px; }
+.floating-tutor-title span { margin-top:3px; color:#69728f; font-size:7px; }
+.floating-tutor-header > button { width:30px; height:30px; border:0; border-radius:8px; color:#6e7691; background:transparent; cursor:pointer; font-size:20px; }
+.floating-tutor-messages { max-height: 290px; padding: 15px; overflow-y:auto; }
+.floating-tutor-message { display:flex; gap:8px; margin-bottom:12px; }
+.floating-tutor-message > span { width:23px; height:23px; flex-shrink:0; display:grid; place-items:center; border-radius:7px; color:#a98cf6; background:rgba(104,67,202,.12); font-size:7px; }
+.floating-tutor-message.user { justify-content:flex-end; }
+.floating-tutor-message.user > span { order:2; color:#9da4bd; background:rgba(75,81,110,.12); }
+.floating-tutor-message p { max-width: 80%; margin:0; padding:8px 10px; border-radius:10px 10px 10px 2px; color:#bfc2d2; background:rgba(23,26,50,.85); font-size:9px; line-height:1.65; }
+.floating-tutor-message.user p { color:#d9d6e7; border-radius:10px 10px 2px 10px; background:rgba(101,66,198,.13); }
+.floating-tutor-typing { display:flex; gap:4px; margin: 5px 0 7px 31px; }
+.floating-tutor-typing i { width:5px; height:5px; border-radius:50%; background:#a078f4; animation: qst-dot 1s infinite ease-in-out; }
+.floating-tutor-typing i:nth-child(2){animation-delay:.15s}.floating-tutor-typing i:nth-child(3){animation-delay:.3s}
+@keyframes qst-dot {0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+.floating-tutor-input { margin: 0 12px 9px; min-height: 48px; padding:5px 5px 5px 10px; display:flex; align-items:flex-end; gap:6px; border:1px solid rgba(125,106,189,.18); border-radius:11px; background:rgba(20,23,47,.86); }
+.floating-tutor-input textarea { flex:1; min-height:31px; max-height:74px; resize:none; outline:none; border:0; color:#e8e8f5; background:transparent; font-size:9px; line-height:1.5; }
+.floating-tutor-input textarea::placeholder{color:#5d6682}
+.floating-tutor-input button { width:34px; height:34px; border:0; border-radius:8px; color:#5e6680; background:rgba(83,83,118,.12); cursor:pointer; }
+.floating-tutor-input button:not(:disabled){color:#fff;background:linear-gradient(135deg,#7c51ea,#5537c8)}
+.floating-tutor-full { width:100%; min-height:34px; border:0; border-top:1px solid rgba(105,108,138,.1); color:#9f8bc7; background:rgba(11,14,31,.7); cursor:pointer; font-size:8px; }
+@media (max-width:650px){.floating-tutor-button{right:14px;bottom:14px;width:54px;height:54px}.floating-tutor-panel{width:calc(100vw - 28px);right:14px;bottom:82px}}
+
+.floating-tutor-prompts {
+  padding: 0 12px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.floating-tutor-prompts button {
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(122, 103, 185, .18);
+  border-radius: 7px;
+  color: #9789bc;
+  background: rgba(85, 65, 149, .08);
+  cursor: pointer;
+  font-size: 8px;
+  line-height: 1.35;
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+.floating-tutor-prompts button:hover:not(:disabled) {
+  color: #d1c5f4;
+  border-color: rgba(143, 108, 237, .36);
+  background: rgba(92, 65, 182, .15);
+}
+.floating-tutor-prompts button:disabled {
+  opacity: .45;
+  cursor: wait;
+}
+@media (max-width: 420px) {
+  .floating-tutor-prompts button { font-size: 7px; }
+}
