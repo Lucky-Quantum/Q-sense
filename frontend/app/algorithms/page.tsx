@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 type Algorithm = {
   name: string;
@@ -160,6 +161,7 @@ export default function AlgorithmsPage() {
 
   return (
     <main className="algorithms-page">
+      <MobileMenuToggle sidebarClassName="algorithms-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="algorithms-bg-grid" />
       <div className="algorithms-glow algorithms-glow-one" />
       <div className="algorithms-glow algorithms-glow-two" />
@@ -215,6 +217,12 @@ export default function AlgorithmsPage() {
             label="AI Tutor"
             icon="✦"
             href="/ai-tutor"
+          />
+
+          <NavItem
+            label="Challenges"
+            icon="⚡"
+            href="/challenges"
           />
         </nav>
 

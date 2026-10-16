@@ -1,8 +1,19 @@
 import Link from "next/link";
-import QuantumLaptop from "@/components/landing/QuantumLaptop";
-import QuantumOrbits from "@/components/landing/QuantumOrbits";
+import FAQAccordion from "@/components/landing/FAQAccordion";
+import dynamic from "next/dynamic";
 import Reveal from "@/components/landing/Reveal";
 import LandingNav from "@/components/landing/LandingNav";
+import AlgorithmAutoScroll from "@/components/landing/AlgorithmAutoScroll";
+
+const QuantumLaptop = dynamic(
+  () => import("@/components/landing/QuantumLaptop"),
+  { ssr: false }
+);
+
+const QuantumOrbits = dynamic(
+  () => import("@/components/landing/QuantumOrbits"),
+  { ssr: false }
+);
 
 const features = [
   {
@@ -391,7 +402,7 @@ export default function Home() {
             <p>Explore standard algorithms through the same learn → build → simulate → visualize workflow.</p>
           </Reveal>
 
-          <div className="algorithm-grid">
+          <div className="algorithm-grid" id="qsense-algorithm-grid">
             {[
               ["Bell State", "Beginner", "Build and understand your first entangled state."],
               ["Deutsch–Jozsa", "Beginner", "Explore a classic algorithm through visual reasoning."],
@@ -413,6 +424,7 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
+          <AlgorithmAutoScroll />
         </div>
       </section>
 
@@ -480,7 +492,7 @@ export default function Home() {
               ["Which quantum frameworks can I learn with?", "The architecture is designed around major quantum development ecosystems including Qiskit, PennyLane and Cirq."],
             ].map(([q, a], i) => (
               <Reveal key={q} delay={i * 80}>
-                <details className="faq-item">
+                <details className="faq-item" name="qsense-faq">
                   <summary>{q}<span>+</span></summary>
                   <p>{a}</p>
                 </details>

@@ -1,5 +1,5 @@
 export type BackendGate = {
-  name: "H" | "X" | "Y" | "Z" | "CX" | "M";
+  name: "H" | "X" | "Y" | "Z" | "S" | "T" | "CX" | "M";
   qubit?: number;
   control?: number;
   target?: number;
@@ -203,12 +203,20 @@ export function circuitCellsToBackendGates(
       continue;
     }
 
-    if (q0 === "H" || q0 === "X" || q0 === "Y" || q0 === "Z") {
+    if (q0 === "H" || q0 === "X" || q0 === "Y" || q0 === "Z" || q0 === "S" || q0 === "T") {
       gates.push({ name: q0, qubit: 0 });
     }
 
-    if (q1 === "H" || q1 === "X" || q1 === "Y" || q1 === "Z") {
+    if (q0 === "MEASURE") {
+      gates.push({ name: "M", qubit: 0 });
+    }
+
+    if (q1 === "H" || q1 === "X" || q1 === "Y" || q1 === "Z" || q1 === "S" || q1 === "T") {
       gates.push({ name: q1, qubit: 1 });
+    }
+
+    if (q1 === "MEASURE") {
+      gates.push({ name: "M", qubit: 1 });
     }
   }
 

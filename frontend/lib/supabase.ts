@@ -2,10 +2,14 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 let client: SupabaseClient | null = null
 
-export function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !anon) return null
-  if (!client) client = createClient(url, anon)
-  return client
+export function getSupabase(): SupabaseClient | null {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !anon) return null
+    if (!client) client = createClient(url, anon)
+    return client
+  } catch {
+    return null
+  }
 }

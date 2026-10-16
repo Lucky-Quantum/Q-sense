@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -25,10 +26,7 @@ export default function SettingsPage() {
     const session =
       localStorage.getItem("qsense-session");
 
-    if (!session) {
-      router.replace("/login");
-      return;
-    }
+    if (!session) { localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true })); }
 
     setEmailNotifications(
       localStorage.getItem(
@@ -73,6 +71,7 @@ export default function SettingsPage() {
 
   return (
     <main className="settings-page">
+      <MobileMenuToggle sidebarClassName="settings-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="settings-grid-bg" />
 
       <div className="settings-glow settings-glow-one" />

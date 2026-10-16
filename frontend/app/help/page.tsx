@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 const FAQS = [
   {
@@ -70,7 +71,7 @@ export default function HelpPage() {
 
   useEffect(() => {
     if (!localStorage.getItem("qsense-session")) {
-      router.replace("/login");
+      localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true }));
     }
   }, [router]);
 
@@ -94,6 +95,7 @@ export default function HelpPage() {
 
   return (
     <main className="help-page">
+      <MobileMenuToggle sidebarClassName="help-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="help-grid-bg" />
 
       <div className="help-glow help-glow-one" />

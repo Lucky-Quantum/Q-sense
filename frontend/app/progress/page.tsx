@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 const MODULES = [
   {
@@ -166,10 +167,7 @@ export default function ProgressPage() {
   useEffect(() => {
     const session = localStorage.getItem("qsense-session");
 
-    if (!session) {
-      router.replace("/login");
-      return;
-    }
+    if (!session) { localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true })); }
 
     const savedXP = localStorage.getItem("qsense-xp");
     const savedStreak = localStorage.getItem("qsense-streak");
@@ -225,6 +223,7 @@ export default function ProgressPage() {
 
   return (
     <main className="progress-page">
+      <MobileMenuToggle sidebarClassName="progress-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="progress-grid-bg" />
 
       <div className="progress-glow progress-glow-one" />

@@ -17,6 +17,7 @@ type TutorMessage = {
 
 export default function FloatingTutor() {
   const pathname = usePathname();
+  const currentPath = pathname || "";
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -46,24 +47,38 @@ export default function FloatingTutor() {
 
   useEffect(() => {
     if (!open) return;
+    const context = getCurrentContext();
+    if (currentPath.startsWith("/quantum-lab") && context.gates.length > 0) {
+      const gateNames = context.gates.map((g) => g.name).join(" → ");
+      const hasCx = context.gates.some((g) => g.name === "CX");
+      let hint = `Your active circuit: ${gateNames}.`;
+      if (!hasCx) {
+        hint += " Tip: a CNOT after an H gate on q₀ creates entanglement. Try adding one to build a Bell state.";
+      } else if (!context.gates.some((g) => g.name === "H" && g.qubit === 0)) {
+        hint += " Tip: the CNOT looks ready — add an H gate on q₀ before it to prepare a Bell state.";
+      } else {
+        hint += " Tip: run the simulator, then ask me to analyze your results for deeper insight.";
+      }
+      setMessages((prev) => [...prev, { role: "ai", text: hint }]);
+    }
     window.setTimeout(() => inputRef.current?.focus(), 50);
-  }, [open]);
+  }, [open, currentPath]);
 
   const quickPrompts = useMemo(() => {
-    if (pathname.startsWith("/quantum-lab")) {
+    if (currentPath.startsWith("/quantum-lab")) {
       return ["Analyze my current circuit", "Why did my result change?", "Help me debug this circuit"];
     }
-    if (pathname.startsWith("/learn")) {
+    if (currentPath.startsWith("/learn")) {
       return ["Explain this concept simply", "Give me a quantum example", "What should I try next?"];
     }
-    if (pathname.startsWith("/challenges")) {
+    if (currentPath.startsWith("/challenges")) {
       return ["Give me a hint, not the answer", "Explain the key concept", "Why is this option correct?"];
     }
-    if (pathname.startsWith("/algorithms")) {
+    if (currentPath.startsWith("/algorithms")) {
       return ["Explain Grover's algorithm", "Compare these algorithms", "When would I use this?"];
     }
     return ["Explain Bell states simply", "What can I try first?", "How does Q-SENSE work?"];
-  }, [pathname]);
+  }, [currentPath]);
 
   async function sendQuestion(rawQuestion: string) {
     const message = rawQuestion.trim();
@@ -84,7 +99,7 @@ export default function FloatingTutor() {
       const response = await askTutor({
         action,
         message,
-        page: pathname,
+        page: currentPath || undefined,
         ...getCurrentContext(),
         history: messages.slice(-6),
       });

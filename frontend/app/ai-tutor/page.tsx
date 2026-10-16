@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 import { askTutor, circuitCellsToBackendGates, getStoredCircuit, getStoredSimulation } from "@/lib/api";
 
 type Message = {
@@ -36,7 +37,7 @@ export default function AITutorPage() {
 
   useEffect(() => {
     if (!localStorage.getItem("qsense-session")) {
-      router.replace("/login");
+      localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true }));
     }
 
     const savedCircuit = getStoredCircuit();
@@ -123,6 +124,7 @@ export default function AITutorPage() {
 
   return (
     <main className="ai-tutor-page">
+      <MobileMenuToggle sidebarClassName="ai-tutor-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="ai-tutor-grid-bg" />
 
       <div className="ai-tutor-glow ai-tutor-glow-one" />

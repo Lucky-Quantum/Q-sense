@@ -53,6 +53,11 @@ function createLaptopScreenCanvas() {
   canvas.height = 780;
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
+  if (typeof (ctx as any).roundRect !== "function") {
+    (ctx as any).roundRect = function (x: number, y: number, w: number, h: number) {
+      this.rect(x, y, w, h);
+    };
+  }
 
   // Background
   const bg = ctx.createLinearGradient(0, 0, 1280, 780);
@@ -240,7 +245,20 @@ export default function QuantumLaptop() {
     const mount = mountRef.current;
     if (!mount) return;
 
-    const scene = new THREE.Scene();
+    try {
+      const webglCanvas = document.createElement("canvas");
+      const gl = webglCanvas.getContext("webgl") ?? webglCanvas.getContext("experimental-webgl");
+      if (!gl) {
+        console.warn("[Q-SENSE] WebGL is not supported or unavailable in this browser. The 3D laptop visualization will be skipped.");
+        return;
+      }
+    } catch (err) {
+      console.warn("[Q-SENSE] WebGL context check threw an error. The 3D laptop visualization will be skipped.", err);
+      return;
+    }
+
+    try {
+      const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(
       34,
@@ -429,6 +447,10 @@ export default function QuantumLaptop() {
         mount.removeChild(renderer.domElement);
       }
     };
+    } catch (err) {
+      console.warn("[Q-SENSE] 3D laptop visualization failed to initialize:", err);
+      return undefined;
+    }
   }, []);
 
   return <div ref={mountRef} className="quantum-laptop-canvas" />;

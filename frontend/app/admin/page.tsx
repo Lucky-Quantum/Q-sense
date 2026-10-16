@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 import { getDemoSession } from "@/lib/session";
 
 const CONTENT = [
@@ -44,13 +45,9 @@ export default function AdminPage() {
   useEffect(() => {
     const session = getDemoSession();
     if (!session) {
-      router.replace("/login");
-      return;
+      localStorage.setItem("qsense-session", JSON.stringify({ role: "admin", email: "admin@qsense.demo", name: "Lucky", demo: true }));
     }
-    if (session.role !== "admin") {
-      router.replace(session.role === "instructor" ? "/instructor" : "/dashboard");
-      return;
-    }
+    // Allow screening jury to view Admin portal directly
 
     setMaintenance(
       localStorage.getItem(
@@ -71,6 +68,7 @@ export default function AdminPage() {
 
   return (
     <main className="admin-page">
+      <MobileMenuToggle sidebarClassName="admin-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="admin-grid-bg" />
       <div className="admin-glow admin-glow-one" />
       <div className="admin-glow admin-glow-two" />

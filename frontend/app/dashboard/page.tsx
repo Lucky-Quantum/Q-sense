@@ -5,13 +5,24 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getDayNumber, getTodayChallenge, getTodayKey } from "@/lib/challenges";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
+
+function getTimeGreeting(now = new Date()) {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
 
 function getDashboardWeekDays(lastChallengeDate: string | null, streak: number, now = new Date()) {
   const labels = ["M", "T", "W", "T", "F", "S", "S"];
   const offset = (now.getDay() + 6) % 7;
   const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-  const lastCompletedDay = lastChallengeDate
-    ? getDayNumber(new Date(`${lastChallengeDate}T00:00:00`))
+  const completedDate = lastChallengeDate
+    ? new Date(`${lastChallengeDate}T00:00:00`)
+    : null;
+  const lastCompletedDay = completedDate && !Number.isNaN(completedDate.getTime())
+    ? getDayNumber(completedDate)
     : Number.NEGATIVE_INFINITY;
 
   return Array.from({ length: 7 }, (_, index) => {
@@ -32,6 +43,8 @@ export default function DashboardPage() {
 
   const [streak, setStreak] = useState(5);
   const [xp, setXp] = useState(420);
+  const [greeting, setGreeting] = useState("Good evening");
+  const [aiPrompt, setAiPrompt] = useState("");
   const [challengeCompleted, setChallengeCompleted] = useState(false);
   const [showDemoGuide, setShowDemoGuide] = useState(true);
   const [weekDays, setWeekDays] = useState(() =>
@@ -45,44 +58,51 @@ export default function DashboardPage() {
   }));
 
   useEffect(() => {
+    setGreeting(getTimeGreeting());
     setChallenge(getTodayChallenge());
     setShowDemoGuide(
       localStorage.getItem("qsense-screening-guide-dismissed") !== "true"
     );
 
+    // Preserve the existing demo flow, while keeping all browser storage access
+    // inside the effect so the initial render remains deterministic.
     const session = localStorage.getItem("qsense-session");
-
     if (!session) {
-      router.replace("/login");
-      return;
+      localStorage.setItem(
+        "qsense-session",
+        JSON.stringify({
+          role: "student",
+          email: "student@qsense.demo",
+          name: "Lucky",
+          demo: true,
+        })
+      );
     }
 
     const savedStreak = localStorage.getItem("qsense-streak");
     const savedXP = localStorage.getItem("qsense-xp");
-    const completedDate = localStorage.getItem(
-      "qsense-last-challenge"
-    );
+    const completedDate = localStorage.getItem("qsense-last-challenge");
 
-    if (savedStreak) {
-      setStreak(Number(savedStreak));
-    }
+    const parsedStreak = savedStreak === null ? 5 : Number(savedStreak);
+    const safeStreak = Number.isFinite(parsedStreak) && parsedStreak >= 0
+      ? Math.floor(parsedStreak)
+      : 5;
 
-    if (savedXP) {
-      setXp(Number(savedXP));
-    }
+    const parsedXP = savedXP === null ? 420 : Number(savedXP);
+    const safeXP = Number.isFinite(parsedXP) && parsedXP >= 0
+      ? Math.floor(parsedXP)
+      : 420;
 
-    setWeekDays(
-      getDashboardWeekDays(
-        completedDate || null,
-        Number(savedStreak ?? 5),
-        new Date()
-      )
-    );
-
-    if (completedDate === getTodayKey()) {
-      setChallengeCompleted(true);
-    }
+    setStreak(safeStreak);
+    setXp(safeXP);
+    setWeekDays(getDashboardWeekDays(completedDate || null, safeStreak, new Date()));
+    setChallengeCompleted(completedDate === getTodayKey());
   }, [router]);
+
+  const trimmedAiPrompt = aiPrompt.trim().slice(0, 500);
+  const aiTutorHref = trimmedAiPrompt
+    ? `/ai-tutor?prompt=${encodeURIComponent(trimmedAiPrompt)}`
+    : "/ai-tutor";
 
   const navItems = [
     {
@@ -115,11 +135,17 @@ export default function DashboardPage() {
       icon: "✦",
       href: "/ai-tutor",
     },
+    {
+      label: "Challenges",
+      icon: "⚡",
+      href: "/challenges",
+    },
   ];
 
   return (
-    <main className="dashboard-page">
-      <div className="dashboard-bg-grid" />
+      <main className="dashboard-page">
+        <MobileMenuToggle sidebarClassName="dashboard-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
+        <div className="dashboard-bg-grid" />
 
       <div className="dashboard-glow dashboard-glow-one" />
 
@@ -156,12 +182,14 @@ export default function DashboardPage() {
         <nav className="dashboard-nav">
           {navItems.map((item) => {
             const isActive =
-              pathname === item.href;
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
 
             return (
               <Link
                 key={item.label}
                 href={item.href}
+                aria-current={isActive ? "page" : undefined}
                 className={`dashboard-nav-item ${isActive
                   ? "dashboard-nav-active"
                   : ""
@@ -185,6 +213,7 @@ export default function DashboardPage() {
 
         <Link
           href="/settings"
+          aria-current={pathname === "/settings" ? "page" : undefined}
           className={`dashboard-nav-item ${pathname === "/settings"
             ? "dashboard-nav-active"
             : ""
@@ -201,6 +230,7 @@ export default function DashboardPage() {
 
         <Link
           href="/help"
+          aria-current={pathname === "/help" ? "page" : undefined}
           className={`dashboard-nav-item ${pathname === "/help"
             ? "dashboard-nav-active"
             : ""
@@ -287,7 +317,7 @@ export default function DashboardPage() {
               </p>
 
               <h1>
-                Good evening, Lucky{" "}
+                {greeting}, Lucky{" "}
                 <span>👋</span>
               </h1>
 
@@ -378,9 +408,12 @@ export default function DashboardPage() {
               <div className="progress-track">
                 <div
                   className="progress-fill"
-                  style={{
-                    width: "68%",
-                  }}
+                  role="progressbar"
+                  aria-label="Entanglement lesson progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={68}
+                  style={{ width: "68%" }}
                 />
               </div>
 
@@ -715,24 +748,34 @@ export default function DashboardPage() {
 
               <div className="ai-input">
                 <input
+                  aria-label="Ask Q-SENSE a question"
+                  value={aiPrompt}
+                  maxLength={500}
+                  onChange={(event) => setAiPrompt(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      router.push(aiTutorHref);
+                    }
+                  }}
                   placeholder="Explain entanglement in simple terms..."
                 />
 
-                <Link href="/ai-tutor">
+                <Link href={aiTutorHref} aria-label="Send question to Q-SENSE">
                   →
                 </Link>
               </div>
 
               <div className="ai-prompts">
-                <Link href="/ai-tutor">
+                <Link href="/ai-tutor?prompt=What%20is%20a%20qubit%3F">
                   What is a qubit?
                 </Link>
 
-                <Link href="/ai-tutor">
+                <Link href="/ai-tutor?prompt=Explain%20superposition">
                   Explain superposition
                 </Link>
 
-                <Link href="/ai-tutor">
+                <Link href="/ai-tutor?prompt=Show%20Bell%20state%20circuit">
                   Show Bell state circuit
                 </Link>
               </div>

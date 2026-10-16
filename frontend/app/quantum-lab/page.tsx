@@ -11,7 +11,7 @@ import {
 import BrandAtom from "@/components/brand/BrandAtom";
 import { circuitCellsToBackendGates, simulateCircuitApi } from "@/lib/api";
 
-type Gate = "H" | "X" | "Y" | "Z" | "CNOT" | "ERASE";
+type Gate = "H" | "X" | "Y" | "Z" | "S" | "T" | "CNOT" | "MEASURE" | "ERASE";
 
 type Complex = {
   re: number;
@@ -109,6 +109,40 @@ function probability(value: Complex) {
 
 function magnitude(value: Complex) {
   return Math.sqrt(probability(value));
+}
+
+type BlochVector = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+function computeBlochVector(state: Complex[]): BlochVector {
+  if (state.length < 4) {
+    return { x: 0, y: 0, z: 1 };
+  }
+
+  const p00 = state[0];
+  const p01 = state[1];
+  const p10 = state[2];
+  const p11 = state[3];
+
+  const rho00 = probability(p00) + probability(p01);
+  const rho11 = probability(p10) + probability(p11);
+
+  const conjP00: Complex = { re: p00.re, im: -p00.im };
+  const conjP01: Complex = { re: p01.re, im: -p01.im };
+
+  const rho01 = complexAdd(
+    complexMultiply(conjP00, p10),
+    complexMultiply(conjP01, p11)
+  );
+
+  const x = 2 * rho01.re;
+  const y = 2 * rho01.im;
+  const z = rho00 - rho11;
+
+  return { x, y, z };
 }
 
 function formatComplex(value: Complex) {
@@ -279,6 +313,31 @@ function simulateCircuit(
     ],
   ];
 
+  const s = [
+    [
+      { re: 1, im: 0 },
+      { re: 0, im: 0 },
+    ],
+    [
+      { re: 0, im: 0 },
+      { re: 0, im: 1 },
+    ],
+  ];
+
+  const t = [
+    [
+      { re: 1, im: 0 },
+      { re: 0, im: 0 },
+    ],
+    [
+      { re: 0, im: 0 },
+      {
+        re: 1 / Math.SQRT2,
+        im: 1 / Math.SQRT2,
+      },
+    ],
+  ];
+
   for (
     let column = 0;
     column < COLUMNS;
@@ -332,6 +391,22 @@ function simulateCircuit(
         );
       }
 
+      if (top === "S") {
+        state = applySingleQubitGate(
+          state,
+          0,
+          s
+        );
+      }
+
+      if (top === "T") {
+        state = applySingleQubitGate(
+          state,
+          0,
+          t
+        );
+      }
+
       if (bottom === "H") {
         state = applySingleQubitGate(
           state,
@@ -363,6 +438,22 @@ function simulateCircuit(
           z
         );
       }
+
+      if (bottom === "S") {
+        state = applySingleQubitGate(
+          state,
+          1,
+          s
+        );
+      }
+
+      if (bottom === "T") {
+        state = applySingleQubitGate(
+          state,
+          1,
+          t
+        );
+      }
     }
   }
 
@@ -386,7 +477,7 @@ function circuitToQiskitCode(circuit: Cell[][]): string {
   for (const gate of gates) {
     if (gate.name === "CX") {
       lines.push(`qc.cx(${gate.control ?? 0}, ${gate.target ?? 1})`);
-    } else if (["H", "X", "Y", "Z"].includes(gate.name)) {
+    } else if (["H", "X", "Y", "Z", "S", "T"].includes(gate.name)) {
       lines.push(`qc.${gate.name.toLowerCase()}(${gate.qubit ?? 0})`);
     }
   }
@@ -411,7 +502,7 @@ function parseQiskitCode(source: string): ParsedCircuit {
     if (/^qc\s*=\s*QuantumCircuit\(\s*2\s*,\s*2\s*\)$/i.test(line)) continue;
     if (/^qc\.measure_all\(\s*\)$/i.test(line)) continue;
 
-    const single = line.match(/^qc\.(h|x|y|z)\(\s*([01])\s*\)$/i);
+    const single = line.match(/^qc\.(h|x|y|z|s|t)\(\s*([01])\s*\)$/i);
     if (single) {
       if (column >= COLUMNS) {
         return { error: `Line ${index + 1}: this demo supports up to ${COLUMNS} gate operations.` };
@@ -442,7 +533,7 @@ function parseQiskitCode(source: string): ParsedCircuit {
     }
 
     return {
-      error: `Line ${index + 1}: unsupported statement. Use qc.h(0), qc.x(1), qc.y(0), qc.z(1), qc.cx(0, 1), and qc.measure_all().`,
+      error: `Line ${index + 1}: unsupported statement. Use qc.h(0), qc.x(1), qc.y(0), qc.z(1), qc.s(0), qc.t(1), qc.cx(0, 1), and qc.measure_all().`,
     };
   }
 
@@ -504,9 +595,7 @@ export default function QuantumLabPage() {
         "qsense-session"
       );
 
-    if (!session) {
-      router.replace("/login");
-    }
+    if (!session) { localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true })); }
   }, [router]);
 
   useEffect(() => {
@@ -539,15 +628,18 @@ export default function QuantumLabPage() {
             (row) =>
               Array.isArray(row) &&
               row.length === COLUMNS &&
-              row.every(
-                (cell) =>
-                  cell === null ||
-                  cell === "H" ||
-                  cell === "X" ||
-                  cell === "Y" ||
-                  cell === "Z" ||
-                  cell === "CNOT"
-              )
+               row.every(
+                 (cell) =>
+                   cell === null ||
+                   cell === "H" ||
+                   cell === "X" ||
+                   cell === "Y" ||
+                   cell === "Z" ||
+                   cell === "S" ||
+                   cell === "T" ||
+                   cell === "CNOT" ||
+                   cell === "MEASURE"
+               )
           );
 
         if (isValidCircuit) {
@@ -603,6 +695,16 @@ export default function QuantumLabPage() {
     sameNumber(probabilities[1], 0.5) &&
     sameNumber(probabilities[2], 0.5);
   const targetXAfterCnot = hasTargetXAfterCnot(circuit);
+
+  const blochVector = useMemo(() => {
+    return computeBlochVector(simulatedState);
+  }, [simulatedState]);
+
+  const blochMagnitude = Math.sqrt(
+    blochVector.x * blochVector.x +
+    blochVector.y * blochVector.y +
+    blochVector.z * blochVector.z
+  );
 
   const aiInsight = useMemo(() => {
     if (!hasRun) {
@@ -1130,10 +1232,28 @@ export default function QuantumLabPage() {
                       "Phase flip",
                   },
                   {
+                    gate: "S" as Gate,
+                    name: "S Gate",
+                    desc:
+                      "Phase gate (√Z)",
+                  },
+                  {
+                    gate: "T" as Gate,
+                    name: "T Gate",
+                    desc:
+                      "π/8 gate",
+                  },
+                  {
                     gate: "CNOT" as Gate,
                     name: "CNOT",
                     desc:
                       "Controlled NOT",
+                  },
+                  {
+                    gate: "MEASURE" as Gate,
+                    name: "Measure",
+                    desc:
+                      "Project to basis",
                   },
                 ].map((item) => (
                   <button
@@ -1159,7 +1279,9 @@ export default function QuantumLabPage() {
                     <span className="ql-gate-symbol">
                       {item.gate === "CNOT"
                         ? "⊕"
-                        : item.gate}
+                        : item.gate === "MEASURE"
+                          ? "M"
+                          : item.gate}
                     </span>
 
                     <span>
@@ -1264,10 +1386,7 @@ export default function QuantumLabPage() {
                   aria-selected={workspaceMode === "visual"}
                   className={workspaceMode === "visual" ? "ql-workspace-tab ql-workspace-tab-active" : "ql-workspace-tab"}
                   onClick={() => {
-                    if (workspaceMode === "code" && codeDraft.trim() !== circuitToQiskitCode(circuit)) {
-                      const discard = window.confirm("Discard unapplied code edits and return to the current visual circuit?");
-                      if (!discard) return;
-                    }
+                    // Smooth switch without blocking window.confirm
                     setWorkspaceMode("visual");
                   }}
                 >
@@ -1414,8 +1533,8 @@ export default function QuantumLabPage() {
                     autoCapitalize="off"
                     autoCorrect="off"
                   />
-                  <p className="ql-code-editor-help">
-                    Supports H, X, Y and Z on q0/q1, CNOT via qc.cx(control, target), comments, and qc.measure_all(). Up to {COLUMNS} sequential gate operations.
+                   <p className="ql-code-editor-help">
+                     Supports H, X, Y, Z, S, T on q0/q1, CNOT via qc.cx(control, target), comments, and qc.measure_all(). Up to {COLUMNS} sequential gate operations.
                   </p>
                   {codeError && <p className="ql-code-error" role="alert">{codeError}</p>}
                   {codeNotice && !codeError && <p className="ql-code-notice" role="status">{codeNotice}</p>}
@@ -1614,39 +1733,41 @@ export default function QuantumLabPage() {
               </div>
 
               <div className="ql-bloch">
-                <div className="ql-bloch-circle">
-                  <div className="bloch-axis bloch-x" />
-                  <div className="bloch-axis bloch-y" />
-                  <div className="bloch-axis bloch-z" />
+                 <div className="ql-bloch-circle">
+                   <div className="bloch-axis bloch-x" />
+                   <div className="bloch-axis bloch-y" />
+                   <div className="bloch-axis bloch-z" />
 
-                  <div
-                    className={`bloch-point ${bellProbabilities || psiPlusState
-                      ? "bloch-point-bell"
-                      : ""
-                      }`}
-                  />
+                   <div
+                     className="bloch-point"
+                     style={{
+                       left: `calc(50% - 5px + ${blochVector.x * 28}%)`,
+                       top: `calc(50% - ${blochVector.z * 28}%)`,
+                       opacity: blochMagnitude > 0 ? 1 : 0.5,
+                     }}
+                   />
 
-                  <span className="bloch-label-top">
-                    |0⟩
-                  </span>
+                   <span className="bloch-label-top">
+                     |0⟩
+                   </span>
 
-                  <span className="bloch-label-bottom">
-                    |1⟩
-                  </span>
+                   <span className="bloch-label-bottom">
+                     |1⟩
+                   </span>
 
-                  <span className="bloch-label-right">
-                    X
-                  </span>
+                   <span className="bloch-label-right">
+                     X
+                   </span>
 
-                  <span className="bloch-label-left">
-                    -X
-                  </span>
-                </div>
-              </div>
+                   <span className="bloch-label-left">
+                     -X
+                   </span>
+                 </div>
+               </div>
 
-              <p className="ql-bloch-note">
-                Visualization updates after each simulation. For an entangled pair, each individual qubit can appear mixed; use the joint statevector and measurement correlations to inspect the full state.
-              </p>
+               <p className="ql-bloch-note">
+                 Qubit q₀ Bloch vector: ({blochVector.x.toFixed(2)}, {blochVector.y.toFixed(2)}, {blochVector.z.toFixed(2)}) — magnitude {blochMagnitude.toFixed(2)}. For an entangled pair, individual qubits appear partially mixed; use the joint statevector to inspect the full state.
+               </p>
             </div>
           </section>
 

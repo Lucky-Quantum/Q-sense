@@ -41,7 +41,7 @@ export function getDemoSession(): DemoSession | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<DemoSession>;
     if (!parsed.role || !parsed.email || !parsed.name) return null;
-    if (!Object.hasOwn(DEMO_ACCOUNTS, parsed.role)) return null;
+    if (!Object.prototype.hasOwnProperty.call(DEMO_ACCOUNTS, parsed.role)) return null;
     return {
       role: parsed.role as DemoRole,
       email: parsed.email,

@@ -1,3 +1,5 @@
+"use client";
+
 export default function QuantumOrbits() {
   return (
     <div className="quantum-field" aria-hidden="true">

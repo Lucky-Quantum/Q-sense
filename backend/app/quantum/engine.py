@@ -14,6 +14,8 @@ def simulate_with_qiskit(gates, shots=1024):
         elif name == 'X': qc.x(gate.get('qubit', 0))
         elif name == 'Y': qc.y(gate.get('qubit', 0))
         elif name == 'Z': qc.z(gate.get('qubit', 0))
+        elif name == 'S': qc.s(gate.get('qubit', 0))
+        elif name == 'T': qc.t(gate.get('qubit', 0))
         elif name == 'CX': qc.cx(gate.get('control',0), gate.get('target',1))
         elif name == 'M': pass
     qc.measure([0,1],[0,1])
@@ -37,6 +39,8 @@ def simulate_with_qiskit(gates, shots=1024):
         elif name == 'X': sv_qc.x(gate.get('qubit',0))
         elif name == 'Y': sv_qc.y(gate.get('qubit',0))
         elif name == 'Z': sv_qc.z(gate.get('qubit',0))
+        elif name == 'S': sv_qc.s(gate.get('qubit',0))
+        elif name == 'T': sv_qc.t(gate.get('qubit',0))
         elif name == 'CX': sv_qc.cx(gate.get('control',0), gate.get('target',1))
     state = Statevector.from_instruction(sv_qc)
     amps = sorted(
@@ -61,7 +65,7 @@ def local_fallback_simulation(gates, shots=1024):
             out[b] = m[1][0]*va + m[1][1]*vb
         return out
     s2 = 1/math.sqrt(2)
-    mats={'H':((s2,s2),(s2,-s2)), 'X':((0,1),(1,0)), 'Y':((0,-1j),(1j,0)), 'Z':((1,0),(0,-1))}
+    mats={'H':((s2,s2),(s2,-s2)), 'X':((0,1),(1,0)), 'Y':((0,-1j),(1j,0)), 'Z':((1,0),(0,-1)), 'S':((1,0),(0,1j)), 'T':((1,0),(0,complex(s2,s2)))}
     for g in gates:
         n=g['name'].upper()
         if n in mats: amp=apply_single(amp, g.get('qubit',0), mats[n])

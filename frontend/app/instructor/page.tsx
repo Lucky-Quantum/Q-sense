@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 import { getDemoSession } from "@/lib/session";
 
 const LEARNERS = [
@@ -72,12 +73,9 @@ export default function InstructorPage() {
   useEffect(() => {
     const session = getDemoSession();
     if (!session) {
-      router.replace("/login");
-      return;
+      localStorage.setItem("qsense-session", JSON.stringify({ role: "instructor", email: "instructor@qsense.demo", name: "Lucky", demo: true }));
     }
-    if (session.role !== "instructor") {
-      router.replace("/dashboard");
-    }
+    // Allow screening jury to view Instructor portal directly
   }, [router]);
 
   const filteredLearners = useMemo(() => {
@@ -94,6 +92,7 @@ export default function InstructorPage() {
 
   return (
     <main className="instructor-page">
+      <MobileMenuToggle sidebarClassName="instructor-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="instructor-grid-bg" />
       <div className="instructor-glow instructor-glow-one" />
       <div className="instructor-glow instructor-glow-two" />

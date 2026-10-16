@@ -11,11 +11,11 @@ from app.ai.tutor import tutor_response
 load_dotenv()
 
 app = FastAPI(title='Q-SENSE Quantum Backend', version='1.0.0')
-origins = [x.strip() for x in os.getenv('CORS_ORIGINS','http://localhost:3000').split(',') if x.strip()]
+origins = [x.strip() for x in os.getenv('CORS_ORIGINS','*').split(',') if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 
 class Gate(BaseModel):
-    name: Literal['H', 'X', 'Y', 'Z', 'CX', 'M']
+    name: Literal['H', 'X', 'Y', 'Z', 'S', 'T', 'CX', 'M']
     qubit: Optional[int] = Field(default=None, ge=0, le=1)
     control: Optional[int] = Field(default=None, ge=0, le=1)
     target: Optional[int] = Field(default=None, ge=0, le=1)

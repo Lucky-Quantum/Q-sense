@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CHALLENGES, calculateNextStreak, getDayNumber, getTodayChallenge, getTodayKey } from "@/lib/challenges";
 import type { Challenge } from "@/lib/challenges";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 const categories = [
   "All",
@@ -35,10 +36,7 @@ export default function ChallengesPage() {
     const session =
       localStorage.getItem("qsense-session");
 
-    if (!session) {
-      router.replace("/login");
-      return;
-    }
+    if (!session) { localStorage.setItem("qsense-session", JSON.stringify({ role: "student", email: "student@qsense.demo", name: "Lucky", demo: true })); }
 
     const savedStreak =
       localStorage.getItem("qsense-streak");
@@ -186,6 +184,7 @@ export default function ChallengesPage() {
 
   return (
     <main className="challenges-page">
+      <MobileMenuToggle sidebarClassName="challenges-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="challenges-bg-grid" />
       <div className="challenges-glow challenges-glow-one" />
       <div className="challenges-glow challenges-glow-two" />

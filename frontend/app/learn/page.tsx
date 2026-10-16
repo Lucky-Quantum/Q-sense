@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import BrandAtom from "@/components/brand/BrandAtom";
+import MobileMenuToggle from "@/components/shared/MobileMenuToggle";
 
 type Module = {
   number: string;
@@ -129,6 +130,7 @@ export default function LearnPage() {
 
   return (
     <main className="learn-page">
+      <MobileMenuToggle sidebarClassName="learn-sidebar" brandHref="/dashboard" brandLabel="Q-SENSE" />
       <div className="learn-bg-grid" />
       <div className="learn-glow learn-glow-one" />
       <div className="learn-glow learn-glow-two" />
