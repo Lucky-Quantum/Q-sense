@@ -79,7 +79,7 @@ flowchart TD
     C --> AA
     M --> AA
     S --> AA
-
+```
 
 ### MVP GOALS
 
@@ -108,7 +108,6 @@ q-sense/
 │   └── app/
 └── supabase/
 ```
-
 ## Run locally
 
 ### Frontend
